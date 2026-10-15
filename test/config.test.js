@@ -1,33 +1,48 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeConfig, DEFAULT_CONFIG } from '../src/config.js';
+import { connectionKey, normalizeConfig, parseHost } from '../src/config.js';
 
-test('normalizeConfig returns the defaults when called with no argument', () => {
-  assert.deepEqual(normalizeConfig(), DEFAULT_CONFIG);
+test('the gateway address, as users type it', () => {
+  assert.deepEqual(parseHost('192.168.1.20'), { host: '192.168.1.20' });
+  assert.deepEqual(parseHost(' phoscon.lan '), { host: 'phoscon.lan' });
+  assert.deepEqual(parseHost('192.168.1.20:8080'), { host: '192.168.1.20', port: 8080 });
+  assert.deepEqual(parseHost('http://192.168.1.20:8080/pwa/index.html'), {
+    host: '192.168.1.20',
+    port: 8080,
+  });
+  assert.deepEqual(parseHost(''), { error: 'empty' });
+  assert.deepEqual(parseHost(null), { error: 'empty' });
+  for (const bad of ['https://host', 'http://user:pw@host', '999.1.1.1', 'a b', 'ws://host']) {
+    assert.deepEqual(parseHost(bad), { error: 'invalid' }, bad);
+  }
 });
 
-test('normalizeConfig keeps user values over the defaults', () => {
-  const config = normalizeConfig({ latitude: 45.5, longitude: -73.6, unit: 'fahrenheit' });
-  assert.equal(config.latitude, 45.5);
-  assert.equal(config.longitude, -73.6);
-  assert.equal(config.unit, 'fahrenheit');
+test('the configuration, normalized', () => {
+  assert.deepEqual(normalizeConfig(), {
+    host: undefined,
+    hostError: 'empty',
+    port: 80,
+    apiKey: '',
+  });
+  assert.deepEqual(normalizeConfig({ host: '10.0.0.5', port: '8080', api_key: ' KEY ' }), {
+    host: '10.0.0.5',
+    hostError: undefined,
+    port: 8080,
+    apiKey: 'KEY',
+  });
+  assert.equal(normalizeConfig({ host: '10.0.0.5:8090', port: 80 }).port, 8090, 'the address wins');
+  assert.equal(normalizeConfig({ host: '10.0.0.5', port: 0 }).port, 80);
+  assert.equal(normalizeConfig({ host: '10.0.0.5', port: null }).port, 80);
 });
 
-test('normalizeConfig coerces numeric strings coming from a form', () => {
-  const config = normalizeConfig({ latitude: '48.8', longitude: '2.3', poll_frequency: '600' });
-  assert.equal(config.latitude, 48.8);
-  assert.equal(config.longitude, 2.3);
-  assert.equal(config.poll_frequency, 600);
-  assert.equal(typeof config.poll_frequency, 'number');
-});
-
-test('normalizeConfig falls back to the default for a missing numeric field', () => {
-  const config = normalizeConfig({ unit: 'celsius' });
-  assert.equal(config.poll_frequency, DEFAULT_CONFIG.poll_frequency);
-});
-
-test('GLADYS_PREFER_LOCAL defaults to true and only an explicit false disables it', () => {
-  assert.equal(normalizeConfig().GLADYS_PREFER_LOCAL, true);
-  assert.equal(normalizeConfig({ GLADYS_PREFER_LOCAL: true }).GLADYS_PREFER_LOCAL, true);
-  assert.equal(normalizeConfig({ GLADYS_PREFER_LOCAL: false }).GLADYS_PREFER_LOCAL, false);
+test('the connection key changes with the address, the port or the key', () => {
+  const a = normalizeConfig({ host: '10.0.0.5', api_key: 'K' });
+  assert.equal(
+    connectionKey(a),
+    connectionKey(normalizeConfig({ host: '10.0.0.5:80', api_key: 'K' })),
+  );
+  assert.notEqual(
+    connectionKey(a),
+    connectionKey(normalizeConfig({ host: '10.0.0.5', api_key: 'L' })),
+  );
 });

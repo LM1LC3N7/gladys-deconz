@@ -1,177 +1,358 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "deCONZ / Phoscon",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "The Zigbee devices of a deCONZ gateway (ConBee, RaspBee): lights, plugs, covers, sensors, remotes.",
+    "fr": "Les appareils Zigbee d'une passerelle deCONZ (ConBee, RaspBee) : lampes, prises, volets, capteurs…"
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "version": "0.1.0",
+  "docker_image": "ghcr.io/lm1lc3n7/gladys-deconz:0.1.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/LM1LC3N7/gladys-deconz/main/cover.png",
+  "categories": ["protocols", "lighting", "environment"],
+  "transports": ["local"],
+  "network_discovery": [
+    {
+      "type": "ssdp",
+      "st": "urn:schemas-upnp-org:device:basic:1"
+    }
+  ],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Your deCONZ gateway, as it is",
+        "fr": "Votre passerelle deCONZ, telle quelle"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "For the ConBee and RaspBee users who keep deCONZ and the Phoscon app: no migration to Zigbee2MQTT, no pairing again. This integration reads the lights, plugs, covers, thermostats, sensors and remotes of your gateway through its local API, follows their changes live and sends your commands. Type the address of the gateway as seen from the Gladys machine (its LAN IP address, the one of the Phoscon app), or press \"Find the gateway\". Unofficial, not affiliated with dresden elektronik.",
+        "fr": "Pour les utilisateurs de ConBee et RaspBee qui gardent deCONZ et l'application Phoscon : pas de migration vers Zigbee2MQTT, pas de nouvel appairage. Cette intégration lit les lampes, prises, volets, thermostats, capteurs et télécommandes de votre passerelle par son API locale, suit leurs changements en direct et envoie vos commandes. Saisissez l'adresse de la passerelle vue depuis la machine Gladys (son adresse IP sur le réseau local, celle de l'application Phoscon), ou utilisez « Trouver la passerelle ». Non officielle, sans lien avec dresden elektronik."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/LM1LC3N7/gladys-deconz/blob/main/docs/fr.md",
+          "label": {
+            "en": "Guide (French)",
+            "fr": "Guide (français)"
+          }
+        },
+        {
+          "url": "https://github.com/LM1LC3N7/gladys-deconz/blob/main/docs/en.md",
+          "label": {
+            "en": "Guide (English)",
+            "fr": "Guide (anglais)"
+          }
+        },
+        {
+          "url": "https://dresden-elektronik.github.io/deconz-rest-doc/",
+          "label": {
+            "en": "The deCONZ REST API",
+            "fr": "L'API REST de deCONZ"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "host",
+      "type": "string",
+      "label": {
+        "en": "Gateway address",
+        "fr": "Adresse de la passerelle"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
       "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+        "en": "The IP address or host name of the machine running deCONZ (the address of the Phoscon app). Empty: the integration looks for it on the network.",
+        "fr": "L'adresse IP ou le nom d'hôte de la machine où tourne deCONZ (l'adresse de l'application Phoscon). Vide : l'intégration la cherche sur le réseau."
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
+      "placeholder": {
+        "en": "192.168.1.20",
+        "fr": "192.168.1.20"
+      },
+      "required": false
     },
     {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
-      "required": false,
-      "default": "celsius",
-      "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
-      ]
-    },
-    {
-      "key": "poll_frequency",
+      "key": "port",
       "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "label": {
+        "en": "Port of the Phoscon app",
+        "fr": "Port de l'application Phoscon"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "80 by default; the port in the Phoscon address otherwise (e.g. 8080 for deCONZ in Docker).",
+        "fr": "80 par défaut ; sinon le port de l'adresse de Phoscon (par ex. 8080 pour deCONZ sous Docker)."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": 80,
+      "min": 1,
+      "max": 65535
+    },
+    {
+      "key": "key_help",
+      "type": "section",
+      "label": {
+        "en": "API key",
+        "fr": "Clé d'API"
+      },
+      "description": {
+        "en": "deCONZ only gives an API key to an app the gateway was unlocked for: 1. Save the address above. 2. In Phoscon, open Settings → Gateway → Advanced and press \"Authenticate app\". 3. Within 60 seconds, press \"Get an API key\" below: the key is saved here, the devices appear in Discovery.",
+        "fr": "deCONZ ne donne une clé d'API qu'à une application pour laquelle la passerelle a été déverrouillée : 1. Enregistrez l'adresse ci-dessus. 2. Dans Phoscon, ouvrez Paramètres → Passerelle → Avancé et cliquez sur « Authentifier l'application ». 3. Dans les 60 secondes, utilisez « Obtenir une clé d'API » ci-dessous : la clé est enregistrée ici, les appareils apparaissent dans Découverte."
+      }
+    },
+    {
+      "key": "api_key",
+      "type": "secret",
+      "label": {
+        "en": "API key",
+        "fr": "Clé d'API"
+      },
+      "description": {
+        "en": "Filled by the \"Get an API key\" button. A key created elsewhere can be pasted too.",
+        "fr": "Remplie par le bouton « Obtenir une clé d'API ». Une clé créée ailleurs peut aussi être collée."
+      },
+      "required": false
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
+      "key": "find_gateway",
+      "label": {
+        "en": "Find the gateway",
+        "fr": "Trouver la passerelle"
+      },
+      "timeout_seconds": 20
+    },
+    {
+      "key": "get_api_key",
+      "label": {
+        "en": "Get an API key",
+        "fr": "Obtenir une clé d'API"
+      },
       "timeout_seconds": 30
     },
     {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion"
+      },
+      "timeout_seconds": 30
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "button_event",
+      "label": {
+        "en": "deCONZ remote button",
+        "fr": "Bouton de télécommande deCONZ"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A button of a remote or a wall switch paired with the deCONZ gateway: which button, which gesture.",
+        "fr": "Un bouton d'une télécommande ou d'un interrupteur appairé à la passerelle deCONZ : quel bouton, quel geste."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": {
+            "en": "Remote or switch",
+            "fr": "Télécommande ou interrupteur"
+          }
         },
         {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "key": "button",
+          "type": "number",
+          "label": {
+            "en": "Button number (1, 2…)",
+            "fr": "Numéro du bouton (1, 2…)"
+          },
+          "min": 1,
+          "max": 99,
+          "description": {
+            "en": "The side of the face for the Aqara cube.",
+            "fr": "Le numéro de la face pour le cube Aqara."
+          }
+        },
+        {
+          "key": "event",
+          "type": "select",
+          "label": {
+            "en": "Gesture",
+            "fr": "Geste"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "short_release",
+              "label": {
+                "en": "Click",
+                "fr": "Clic"
+              }
+            },
+            {
+              "value": "initial_press",
+              "label": {
+                "en": "Pressed (start)",
+                "fr": "Appui (début)"
+              }
+            },
+            {
+              "value": "hold",
+              "label": {
+                "en": "Held",
+                "fr": "Maintenu"
+              }
+            },
+            {
+              "value": "long_release",
+              "label": {
+                "en": "Released after a hold",
+                "fr": "Relâché après maintien"
+              }
+            },
+            {
+              "value": "double_press",
+              "label": {
+                "en": "Double click",
+                "fr": "Double clic"
+              }
+            },
+            {
+              "value": "triple_press",
+              "label": {
+                "en": "Triple click",
+                "fr": "Triple clic"
+              }
+            },
+            {
+              "value": "quadruple_press",
+              "label": {
+                "en": "Quadruple click",
+                "fr": "Quadruple clic"
+              }
+            },
+            {
+              "value": "many_press",
+              "label": {
+                "en": "Many clicks",
+                "fr": "Clics multiples"
+              }
+            },
+            {
+              "value": "shake",
+              "label": {
+                "en": "Shaken",
+                "fr": "Secoué"
+              }
+            },
+            {
+              "value": "drop",
+              "label": {
+                "en": "Dropped",
+                "fr": "Lâché"
+              }
+            },
+            {
+              "value": "tilt",
+              "label": {
+                "en": "Tilted",
+                "fr": "Incliné"
+              }
+            },
+            {
+              "value": "rotate_cw",
+              "label": {
+                "en": "Turned clockwise",
+                "fr": "Tourné dans le sens horaire"
+              }
+            },
+            {
+              "value": "rotate_ccw",
+              "label": {
+                "en": "Turned counterclockwise",
+                "fr": "Tourné dans le sens antihoraire"
+              }
+            },
+            {
+              "value": "flip_90",
+              "label": {
+                "en": "Cube flipped 90°",
+                "fr": "Cube retourné de 90°"
+              }
+            },
+            {
+              "value": "flip_180",
+              "label": {
+                "en": "Cube flipped 180°",
+                "fr": "Cube retourné de 180°"
+              }
+            },
+            {
+              "value": "push",
+              "label": {
+                "en": "Cube pushed",
+                "fr": "Cube poussé"
+              }
+            },
+            {
+              "value": "double_tap",
+              "label": {
+                "en": "Cube double tap",
+                "fr": "Double tape sur le cube"
+              }
+            },
+            {
+              "value": "wake",
+              "label": {
+                "en": "Cube woken up",
+                "fr": "Cube réveillé"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "button",
+          "type": "number",
+          "label": {
+            "en": "Button number",
+            "fr": "Numéro du bouton"
+          },
+          "description": {
+            "en": "Empty for a cube rotation.",
+            "fr": "Vide pour une rotation du cube."
+          }
+        },
+        {
+          "key": "event",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Gesture",
+            "fr": "Geste"
+          }
+        },
+        {
+          "key": "code",
+          "type": "number",
+          "label": {
+            "en": "deCONZ button event code",
+            "fr": "Code d'événement deCONZ"
+          },
+          "description": {
+            "en": "buttonevent: button × 1000 + event (1002 = button 1, click); the angle × 100 for a cube rotation.",
+            "fr": "buttonevent : bouton × 1000 + événement (1002 = bouton 1, clic) ; l'angle × 100 pour une rotation du cube."
+          }
+        },
+        {
+          "key": "gesture",
+          "type": "number",
+          "label": {
+            "en": "Cube gesture (Aqara)",
+            "fr": "Geste du cube (Aqara)"
+          }
         }
       ]
-    }
-  ],
-  "scene_actions": [
-    {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
-      },
-      "timeout_seconds": 15,
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ],
-      "outputs": [
-        {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
-        }
-      ]
-    }
-  ],
-  "widgets": [
-    {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
-      },
-      "icon": "activity",
-      "action_timeout_seconds": 15
     }
   ]
 }

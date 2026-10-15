@@ -1,61 +1,105 @@
-# Demo Devices Template
+# deCONZ / Phoscon
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+You have a **ConBee** stick or a **RaspBee** board with **deCONZ** and the
+**Phoscon** app, and you do not want to pair everything again in Zigbee2MQTT?
+This integration connects Gladys to your gateway as it is: your lights, plugs,
+covers, thermostats, sensors and remotes appear in the **Discovery** tab of
+Gladys, their changes arrive live and your commands go to the gateway.
+Everything stays on your local network.
+
+Unofficial integration, not affiliated with dresden elektronik (the maker of
+deCONZ, Phoscon, ConBee and RaspBee).
+
+> **Development version (0.1).** Developed and tested against faithful copies
+> of the deCONZ API answers, not yet against a real gateway. Feedback is welcome
+> on the GitHub repository.
 
 ## What you get
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+| In deCONZ                                      | In Gladys                                                                |
+| ---------------------------------------------- | ------------------------------------------------------------------------ |
+| Lights (color, color temperature, dimmable)    | light: on/off, brightness, color temperature (mireds), color             |
+| Plugs, relays, "On/Off light"                  | switch (and power, voltage, current, energy when the plug measures them) |
+| Covers (`Window covering device`)              | shutter: open, close, stop, position (100 % = open)                      |
+| `ZHAThermostat` (radiator valves)              | thermostat: temperature, setpoint, mode (off, heat, auto), activity      |
+| `ZHATemperature`, `ZHAHumidity`, `ZHAPressure` | temperature (°C), humidity (%), pressure (hPa) sensors                   |
+| `ZHAOpenClose`, `ZHAPresence`                  | opening sensor, motion sensor                                            |
+| `ZHAWater`, `ZHAFire`, `ZHACarbonMonoxide`     | water leak, smoke, carbon monoxide detectors                             |
+| `ZHALightLevel`                                | illuminance (lux)                                                        |
+| `ZHAPower`, `ZHAConsumption`                   | power (W), voltage (V), current (A), energy (kWh, an index for a meter)  |
+| `ZHAVibration`, `ZHAMoisture`, `ZHAAirQuality` | vibration and tilt, soil moisture, VOC (ppb)                             |
+| `ZHABattery` and the battery of every sensor   | battery (%) of the device                                                |
+| `ZHASwitch` (remotes, wall switches)           | button, and the **deCONZ remote button** scene trigger                   |
 
-## Configuration
+deCONZ often splits one device into several "resources" (a Xiaomi sensor =
+temperature + humidity + pressure): the integration groups them into **one
+Gladys device** by their Zigbee address, with one battery. It is named after
+its light, or its main sensor, in Phoscon.
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+Whether each device is reachable shows on its connection badge.
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+## Setup
 
-## Actions
+1. deCONZ runs and the Phoscon app opens in your browser (for example
+   `http://192.168.1.20`).
+2. In the configuration of the integration, type the **gateway address**: the
+   IP address of the machine running deCONZ, as seen from the Gladys machine
+   (not `localhost`: the integration runs in its own container). Leave it
+   empty, or press **Find the gateway**, for Gladys to look for it on the
+   network (SSDP).
+3. The **port** is the one of the Phoscon app: 80 by default, otherwise the one
+   in its address (e.g. 8080 for deCONZ in Docker). Save.
+4. **API key**: in Phoscon, open **Settings → Gateway → Advanced** and press
+   **Authenticate app**. Within 60 seconds, press the **Get an API key** button
+   of the integration: the key is saved and the connection starts. (A key
+   created elsewhere can also be pasted in the "API key" field.)
+5. Open **Discovery** and add your devices. The **Test the connection** button
+   sums up what the gateway holds.
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+The live events go through the deCONZ **WebSocket**, on the port it announces
+(often 443 on a Raspberry Pi, 8081 in Docker): that port must be reachable
+from the Gladys machine too.
 
-## Scenes
+## Remotes and wall switches
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+Every press of a remote fires the **deCONZ remote button** scene trigger, which
+you can filter by device, **button number** and **gesture**: click
+(`short_release`), press, hold, release after a hold, double, triple or
+quadruple click, shake, drop, tilt, rotation. The `button`, `event`, `code`
+and `gesture` variables are available to the actions of the scene.
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+deCONZ codes each press `button × 1000 + gesture`: `1002` = button 1, click;
+`2001` = button 2, held; `4003` = button 4, released after a hold. On a Hue
+dimmer, for example, 1 = on, 2 = brighter, 3 = dimmer, 4 = off. To learn the
+number of a button, press it and look at the `button` variable (or the logs of
+the integration).
 
-## Dashboard
+The **Aqara cube** gives its side (`button`) and its gesture: flipped 90° or
+180°, pushed, double tap, shaken, dropped, turned (the angle × 100 is in
+`code`). The **Hue Tap** gives its buttons 1 to 4.
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+The device also has a **Button** feature taking the value of the last gesture
+(without the button number): handy for a one-button remote; for several
+buttons, prefer the scene trigger.
+
+## Good to know
+
+- The deCONZ **groups** and **scenes** are not taken over yet, nor the locks,
+  sirens and fans: they are left out (see the logs).
+- A thermostat accepts the modes it knows: a mode the valve refuses returns the
+  deCONZ error.
+- The ids of the devices in Gladys come from the Zigbee address: they do not
+  change when deCONZ renumbers its resources.
+- The gateway must serve HTTP on your local network (the default).
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"The deCONZ gateway is unreachable"**: check the address and the port (the
+  Phoscon ones), and that deCONZ runs.
+- **"The gateway refused the API key"**: the key was deleted in Phoscon
+  (Settings → Gateway → Advanced, list of apps): do step 4 again.
+- **No live changes, or "the event connection is lost"**: the deCONZ WebSocket
+  port is not reachable from Gladys (firewall, port not published by the deCONZ
+  container).
+- **Find the gateway finds nothing**: some setups (Docker, VLANs) do not answer
+  SSDP; type the address by hand.

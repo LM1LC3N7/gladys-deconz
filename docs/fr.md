@@ -1,67 +1,109 @@
-# Template de démonstration
+# deCONZ / Phoscon
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Vous avez une clé **ConBee** ou une carte **RaspBee** avec **deCONZ** et
+l'application **Phoscon**, et vous ne voulez pas tout réappairer dans
+Zigbee2MQTT ? Cette intégration connecte Gladys à votre passerelle telle
+qu'elle est : vos lampes, prises, volets, thermostats, capteurs et
+télécommandes apparaissent dans l'onglet **Découverte** de Gladys, leurs
+changements arrivent en direct et vos commandes partent vers la passerelle.
+Tout reste sur votre réseau local.
+
+Intégration non officielle, sans lien avec dresden elektronik (éditeur de
+deCONZ, Phoscon, ConBee et RaspBee).
+
+> **Version de développement (0.1).** Développée et testée contre des réponses
+> de l'API deCONZ reproduites fidèlement, pas encore contre une vraie
+> passerelle. Vos retours sont les bienvenus sur le dépôt GitHub.
 
 ## Ce que vous obtenez
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+| Dans deCONZ                                         | Dans Gladys                                                                    |
+| --------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Lampes (couleur, température de couleur, variables) | lampe : marche/arrêt, luminosité, température de couleur (mireds), couleur     |
+| Prises, relais, « On/Off light »                    | interrupteur (et puissance, tension, courant, énergie si la prise les mesure)  |
+| Volets (`Window covering device`)                   | volet : ouvrir, fermer, stop, position (100 % = ouvert)                        |
+| `ZHAThermostat` (têtes thermostatiques)             | thermostat : température, consigne, mode (arrêt, chauffe, auto), activité      |
+| `ZHATemperature`, `ZHAHumidity`, `ZHAPressure`      | capteurs de température (°C), d'humidité (%), de pression (hPa)                |
+| `ZHAOpenClose`, `ZHAPresence`                       | capteur d'ouverture, détecteur de mouvement                                    |
+| `ZHAWater`, `ZHAFire`, `ZHACarbonMonoxide`          | détecteurs de fuite d'eau, de fumée, de monoxyde de carbone                    |
+| `ZHALightLevel`                                     | luminosité (lux)                                                               |
+| `ZHAPower`, `ZHAConsumption`                        | puissance (W), tension (V), courant (A), énergie (kWh, index pour un compteur) |
+| `ZHAVibration`, `ZHAMoisture`, `ZHAAirQuality`      | vibration et inclinaison, humidité du sol, COV (ppb)                           |
+| `ZHABattery` et la pile de chaque capteur           | batterie (%) de l'appareil                                                     |
+| `ZHASwitch` (télécommandes, interrupteurs)          | bouton, et déclencheur de scène **Bouton de télécommande deCONZ**              |
 
-## Configuration
+deCONZ découpe souvent un appareil en plusieurs « ressources » (un capteur
+Xiaomi = température + humidité + pression) : l'intégration les regroupe en
+**un seul appareil Gladys** grâce à l'adresse Zigbee, avec une seule batterie.
+Son nom est celui de la lampe, sinon du capteur principal, dans Phoscon.
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+L'état « joignable » de chaque appareil s'affiche sur son badge de connexion.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+## Installation
 
-## Actions
+1. deCONZ tourne et l'application Phoscon s'ouvre dans votre navigateur (par
+   exemple `http://192.168.1.20`).
+2. Dans la configuration de l'intégration, saisissez l'**adresse de la
+   passerelle** : l'adresse IP de la machine où tourne deCONZ, vue depuis la
+   machine Gladys (pas `localhost` : l'intégration tourne dans son propre
+   conteneur). Laissez le champ vide, ou utilisez **Trouver la passerelle**,
+   pour que Gladys la cherche sur le réseau (SSDP).
+3. Le **port** est celui de l'application Phoscon : 80 par défaut, sinon celui
+   de son adresse (par exemple 8080 pour deCONZ sous Docker). Enregistrez.
+4. **Clé d'API** : dans Phoscon, ouvrez **Paramètres → Passerelle → Avancé** et
+   cliquez sur **Authentifier l'application**. Dans les 60 secondes, utilisez le
+   bouton **Obtenir une clé d'API** de l'intégration : la clé est enregistrée et
+   la connexion démarre. (Une clé déjà créée ailleurs peut aussi être collée
+   dans le champ « Clé d'API ».)
+5. Ouvrez **Découverte** et ajoutez vos appareils. Le bouton **Tester la
+   connexion** résume ce que la passerelle contient.
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+Les événements en direct passent par le **WebSocket** de deCONZ, sur le port
+qu'il annonce (souvent 443 sur un Raspberry Pi, 8081 sous Docker) : ce port
+doit aussi être joignable depuis la machine Gladys.
 
-## Scènes
+## Télécommandes et interrupteurs
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+Chaque appui d'une télécommande déclenche la scène **Bouton de télécommande
+deCONZ**, que vous pouvez filtrer par appareil, par **numéro de bouton** et par
+**geste** : clic (`short_release`), appui, maintien, relâché après maintien,
+double, triple ou quadruple clic, secousse, chute, inclinaison, rotation. Les
+variables `button`, `event`, `code` et `gesture` sont disponibles dans les
+actions de la scène.
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+deCONZ code chaque appui `bouton × 1000 + geste` : `1002` = bouton 1, clic ;
+`2001` = bouton 2, maintenu ; `4003` = bouton 4, relâché après maintien. Par
+exemple, sur un variateur Hue, 1 = allumer, 2 = plus fort, 3 = moins fort,
+4 = éteindre. Pour connaître le numéro d'un bouton, appuyez dessus et regardez
+la variable `button` (ou les logs de l'intégration).
 
-## Tableau de bord
+Le **cube Aqara** donne la face (`button`) et son geste : retourné de 90° ou
+180°, poussé, double tape, secoué, lâché, tourné (l'angle × 100 est dans
+`code`). Le **Hue Tap** donne ses boutons 1 à 4.
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+L'appareil a aussi une fonctionnalité **Bouton** qui prend la valeur du dernier
+geste (sans le numéro du bouton) : pratique pour une télécommande à un bouton ;
+pour plusieurs boutons, préférez le déclencheur de scène.
+
+## Bon à savoir
+
+- Les **groupes** et les **scènes** de deCONZ ne sont pas encore repris, ni les
+  serrures, sirènes et ventilateurs : ils sont ignorés (voir les logs).
+- Un thermostat accepte les modes qu'il connaît : un mode refusé par la tête
+  renvoie l'erreur de deCONZ.
+- Les identifiants des appareils dans Gladys viennent de l'adresse Zigbee : ils
+  ne changent pas si deCONZ renumérote ses ressources.
+- La passerelle doit être en HTTP sur votre réseau local (le cas par défaut).
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« La passerelle deCONZ est injoignable »** : vérifiez l'adresse et le port
+  (ceux de Phoscon), et que deCONZ tourne.
+- **« La passerelle a refusé la clé d'API »** : la clé a été supprimée dans
+  Phoscon (Paramètres → Passerelle → Avancé, liste des applications) : refaites
+  l'étape 4.
+- **Pas de changements en direct, ou « connexion aux événements perdue »** : le
+  port WebSocket de deCONZ n'est pas joignable depuis Gladys (pare-feu, port
+  non publié par le conteneur deCONZ).
+- **Trouver la passerelle ne trouve rien** : certaines installations (Docker,
+  VLAN) ne répondent pas au SSDP ; saisissez l'adresse à la main.
