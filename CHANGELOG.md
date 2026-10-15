@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-15
+
 ### Added
 
 - Connection to a deCONZ / Phoscon gateway (ConBee, RaspBee) through its local
@@ -34,4 +36,5 @@ the notes of the version's GitHub Release.
 - The reachability of the devices on their transport badge.
 - States within the Gladys rate limit; button presses never merged.
 
-[Unreleased]: https://github.com/LM1LC3N7/gladys-deconz/commits/main
+[Unreleased]: https://github.com/LM1LC3N7/gladys-deconz/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/LM1LC3N7/gladys-deconz/releases/tag/v0.1.1
