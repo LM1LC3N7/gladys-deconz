@@ -6,8 +6,8 @@
     "en": "The Zigbee devices of a deCONZ gateway (ConBee, RaspBee): lights, plugs, covers, sensors, remotes.",
     "fr": "Les appareils Zigbee d'une passerelle deCONZ (ConBee, RaspBee) : lampes, prises, volets, capteurs…"
   },
-  "version": "0.1.1",
-  "docker_image": "ghcr.io/lm1lc3n7/gladys-deconz:0.1.1",
+  "version": "0.1.2",
+  "docker_image": "ghcr.io/lm1lc3n7/gladys-deconz:0.1.2",
   "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/LM1LC3N7/gladys-deconz/main/cover.png",
   "categories": ["protocols", "lighting", "environment"],

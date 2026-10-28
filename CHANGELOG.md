@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-28
+
 ### Fixed
 
 - Plain string labels for the select options of the thermostat mode (they had
@@ -47,5 +49,6 @@ the notes of the version's GitHub Release.
 - The reachability of the devices on their transport badge.
 - States within the Gladys rate limit; button presses never merged.
 
-[Unreleased]: https://github.com/LM1LC3N7/gladys-deconz/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/LM1LC3N7/gladys-deconz/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/LM1LC3N7/gladys-deconz/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/LM1LC3N7/gladys-deconz/releases/tag/v0.1.1

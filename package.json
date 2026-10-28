@@ -1,6 +1,6 @@
 {
   "name": "gladys-deconz",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Gladys Assistant external integration for the Zigbee devices of a deCONZ / Phoscon gateway (ConBee, RaspBee). Unofficial, not affiliated with dresden elektronik.",
   "type": "module",
