@@ -27,6 +27,13 @@ import { hueSatToInt, intToHueSat, intToXy, xyToInt } from './colors.js';
 export const COVER_STATE = { STOP: 0, OPEN: 1, CLOSE: -1 };
 export const OPENING_SENSOR_STATE = { OPEN: 0, CLOSE: 1 };
 export const THERMOSTAT_MODE = { OFF: 0, HEATING: 1, COOLING: 2, AUTO: 3 };
+/** The label of each mode: the Gladys core refuses an option without a string label. */
+const THERMOSTAT_MODE_LABELS = {
+  [THERMOSTAT_MODE.OFF]: 'Off',
+  [THERMOSTAT_MODE.HEATING]: 'Heating',
+  [THERMOSTAT_MODE.COOLING]: 'Cooling',
+  [THERMOSTAT_MODE.AUTO]: 'Auto',
+};
 export const THERMOSTAT_OPERATING_STATE = { IDLE: 0, HEATING: 1, COOLING: 2 };
 
 /** deCONZ thermostat modes -> Gladys; the first one of a Gladys value is the one written. */
@@ -418,7 +425,11 @@ function mapThermostat(r) {
         max: 3,
         read_only: false,
         keep_history: false,
-        supported_options: supported.map((value, i) => ({ value, sort_order: i + 1 })),
+        supported_options: supported.map((value, i) => ({
+          value,
+          label: THERMOSTAT_MODE_LABELS[value],
+          sort_order: i + 1,
+        })),
       }),
     );
     writers.mode = (value, res) => {
