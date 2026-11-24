@@ -92,3 +92,7 @@ No dedicated topic for this integration. Once the 10 integrations claimed on
   request / a restart.
 - The setConfig of the buttons comes back through `onConfigUpdated`:
   `configure()` only reconnects when the host, port or key changed.
+
+## Next patch
+
+- Migration review minors: see `_lots/migration-reviews/w10-gladys-deconz-r2.md`.
