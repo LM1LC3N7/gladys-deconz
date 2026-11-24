@@ -51,6 +51,19 @@ No dedicated topic for this integration. Once the 10 integrations claimed on
 2026-10-15 are published, a single recap message in the general thread
 (/t/10385) lists each of them with its version and capabilities.
 
+## Next patch
+
+- Min/max test: add a meter alone (ZHAPower/ZHAConsumption with voltage and
+  current, no plug) so `energy-sensor/voltage` and `/current` are built; count
+  the features exactly instead of `seen.size >= 31` (review w10 r1, minors 2-3).
+- Strict writes: thermostat mode refused when not in the feature's
+  `supported_options` (and `''`/`1.4` not rounded); cover position refused when
+  not a number (minor 4).
+- Strip `config.apiKey` from a gateway error description before it reaches a
+  status or a log (minor 5, theoretical). `LICENSE` file (cross-repo pass).
+- To decide (Louis): thermostat setpoint and mode are sent without an option,
+  like the other bridges (only homee has `allow_heating_control`).
+
 ## Decisions
 
 - **SDK `^0.16.1`** (2026-11-24, migration wave 10): it adds the ai, tts and

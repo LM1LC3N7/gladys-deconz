@@ -14,6 +14,11 @@ the notes of the version's GitHub Release.
 
 - Integration SDK 0.16.1 (no change for the devices).
 
+### Fixed
+
+- A thermostat setpoint outside 5-32 °C, or not a number (empty, text), is
+  refused and nothing is sent to the gateway (it was written as received).
+
 ## [0.1.2] - 2026-10-28
 
 ### Fixed

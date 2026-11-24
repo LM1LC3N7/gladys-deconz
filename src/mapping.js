@@ -387,6 +387,34 @@ function electrical(r, context) {
   };
 }
 
+/** The bounds of a thermostat setpoint, in °C: a value outside is refused, never sent. */
+export const SETPOINT = Object.freeze({ min: 5, max: 32 });
+
+/** A number, or a string that is only a number ('' or null is not 0). */
+export function strictNumber(value) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (typeof value === 'string' && /^\s*-?\d+(\.\d+)?\s*$/.test(value)) {
+    return Number(value);
+  }
+  return undefined;
+}
+
+/** The setpoint asked, checked: a strict number within SETPOINT, else an error. */
+function setpointOf(value) {
+  const n = strictNumber(value);
+  if (n === undefined) {
+    throw new Error(`thermostat setpoint ${JSON.stringify(value)} is not a number, nothing sent`);
+  }
+  if (n < SETPOINT.min || n > SETPOINT.max) {
+    throw new Error(
+      `thermostat setpoint ${n} °C is outside ${SETPOINT.min}-${SETPOINT.max} °C, nothing sent`,
+    );
+  }
+  return n;
+}
+
 function mapThermostat(r) {
   const putConfig = (res, body) => ({ path: `/sensors/${res.id}/config`, body });
   const features = [];
@@ -403,14 +431,14 @@ function mapThermostat(r) {
         type: T.THERMOSTAT.TARGET_TEMPERATURE,
         unit: U.CELSIUS,
         // deCONZ accepts 500-3200 (centi-degrees).
-        min: 5,
-        max: 32,
+        min: SETPOINT.min,
+        max: SETPOINT.max,
         step: 0.5,
         read_only: false,
       }),
     );
     writers.heatsetpoint = (value, res) =>
-      putConfig(res, { heatsetpoint: Math.round(Number(value) * 100) });
+      putConfig(res, { heatsetpoint: Math.round(setpointOf(value) * 100) });
   }
   if (typeof r.config?.mode === 'string') {
     const supported = [THERMOSTAT_MODE.OFF, THERMOSTAT_MODE.HEATING, THERMOSTAT_MODE.AUTO];

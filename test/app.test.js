@@ -162,6 +162,21 @@ test('commands are sent to the REST API', async (t) => {
   assert.deepEqual((await send(thermostat, 'mode', THERMOSTAT_MODE.HEATING)).body, {
     mode: 'heat',
   });
+  // The setpoint: a strict number within 5-32 °C, else refused and nothing sent.
+  const head = device(gladys, thermostat);
+  const setpoint = head.features.find(
+    (x) => x.external_id === featureId(thermostat, 'heatsetpoint'),
+  );
+  for (const bad of [99, -40, 32.5, 4.9, 1e6, '', null, undefined, 'abc', NaN, Infinity, '21abc']) {
+    const before = gateway.puts.length;
+    const ack = await gladys.fake.setValue(head, setpoint, bad);
+    assert.equal(ack.success, false, `${String(bad)} refused`);
+    assert.match(ack.error, /nothing sent/);
+    assert.equal(gateway.puts.length, before, `${String(bad)}: nothing sent`);
+  }
+  assert.deepEqual((await send(thermostat, 'heatsetpoint', 5)).body, { heatsetpoint: 500 });
+  assert.deepEqual((await send(thermostat, 'heatsetpoint', 32)).body, { heatsetpoint: 3200 });
+  assert.deepEqual((await send(thermostat, 'heatsetpoint', '19.5')).body, { heatsetpoint: 1950 });
 
   // A sensor cannot be controlled; a gateway error is the command's error.
   const weather = device(gladys, WEATHER);
