@@ -15,6 +15,7 @@ import { buildModel, deviceReachable, signatureOf } from '../src/devices.js';
 import { COVER_STATE, OPENING_SENSOR_STATE, THERMOSTAT_MODE, mapResource } from '../src/mapping.js';
 import { parseCollection, toResource } from '../src/resources.js';
 import { LIGHTS, SENSORS, deviceId, featureId } from './fixtures/gateway.js';
+import { assertCoreDevice } from './helpers/coreFeature.js';
 
 const gladys = createFakeGladys();
 const resources = [...parseCollection('lights', LIGHTS), ...parseCollection('sensors', SENSORS)];
@@ -235,4 +236,92 @@ test('signature and reachability', () => {
   assert.equal(deviceReachable(keys, map), true, 'one relay still answers');
   map.set('lights/7', { ...map.get('lights/7'), state: { reachable: false } });
   assert.equal(deviceReachable(keys, map), false);
+});
+
+test('every feature of every mapping has a numeric min and max and the other core fields', () => {
+  // The fixture gateway, plus the branches it does not reach.
+  const mac = (n) => `00:12:4b:00:00:00:00:${String(n).padStart(2, '0')}-01`;
+  const extraLights = {
+    101: {
+      name: 'CT',
+      type: 'Color temperature light',
+      uniqueid: mac(1),
+      state: { on: true, ct: 300 },
+    },
+    102: {
+      name: 'Plug meter',
+      type: 'On/Off plug-in unit',
+      uniqueid: mac(2),
+      state: { on: false },
+    },
+  };
+  const extraSensors = {
+    101: {
+      name: 'Soil',
+      type: 'ZHAMoisture',
+      uniqueid: `${mac(3)}-0408`,
+      state: { moisture: 4000 },
+    },
+    102: {
+      name: 'VOC',
+      type: 'ZHAAirQuality',
+      uniqueid: `${mac(4)}-fc03`,
+      state: { airqualityppb: 80 },
+    },
+    103: {
+      name: 'Meter',
+      type: 'ZHAConsumption',
+      uniqueid: `${mac(5)}-0702`,
+      state: { consumption: 1, power: 2 },
+    },
+    104: {
+      name: 'Plug power',
+      type: 'ZHAPower',
+      uniqueid: `${mac(2)}-0b04`,
+      state: { power: 5, voltage: 230, current: 20 },
+    },
+    105: {
+      name: 'Tilt',
+      type: 'ZHAVibration',
+      uniqueid: `${mac(6)}-0101`,
+      state: { vibration: false, tiltangle: 10 },
+      config: { battery: 50 },
+    },
+    106: {
+      name: 'AC',
+      type: 'ZHAThermostat',
+      uniqueid: `${mac(7)}-0201`,
+      state: { on: false, temperature: 2000 },
+      config: { heatsetpoint: 2100, coolsetpoint: 2500, mode: 'cool' },
+    },
+    107: { name: 'Green', type: 'ZGPSwitch', uniqueid: `${mac(8)}-f2`, state: { buttonevent: 16 } },
+  };
+  const all = [
+    ...parseCollection('lights', { ...LIGHTS, ...extraLights }),
+    ...parseCollection('sensors', { ...SENSORS, ...extraSensors }),
+  ];
+  const built = buildModel(gladys, all);
+  const seen = new Set();
+  for (const device of built.devices) {
+    assertCoreDevice(device, device.name);
+    device.features.forEach((f) => seen.add(`${f.category}/${f.type}`));
+  }
+  // Every category/type the mapping can publish was checked.
+  for (const pair of [
+    `${C.LIGHT}/${T.LIGHT.TEMPERATURE}`,
+    `${C.SOIL_MOISTURE_SENSOR}/${T.SENSOR.DECIMAL}`,
+    `${C.VOC_SENSOR}/${T.VOC_SENSOR.DECIMAL}`,
+    `${C.ENERGY_SENSOR}/${T.ENERGY_SENSOR.INDEX}`,
+    `${C.SWITCH}/${T.SWITCH.VOLTAGE}`,
+    `${C.VIBRATION_SENSOR}/${T.VIBRATION_SENSOR.TILT_ANGLE}`,
+    `${C.THERMOSTAT}/${T.THERMOSTAT.MODE}`,
+    `${C.THERMOSTAT}/${T.THERMOSTAT.OPERATING_STATE}`,
+    `${C.SHUTTER}/${T.SHUTTER.POSITION}`,
+    `${C.BUTTON}/${T.BUTTON.CLICK}`,
+    `${C.BATTERY}/${T.BATTERY.INTEGER}`,
+    `${C.LIGHT}/${T.LIGHT.COLOR}`,
+  ]) {
+    assert.ok(seen.has(pair), pair);
+  }
+  assert.ok(seen.size >= 31, `${seen.size} kinds of features`);
 });

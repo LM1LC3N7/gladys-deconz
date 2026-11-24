@@ -8,7 +8,7 @@ already taken and the next milestones.
 
 A Gladys Assistant **external integration** of type `device`: a Node.js
 service (Node 22+, ESM, no build step) in its own sandboxed Docker container,
-talking to Gladys through `@gladysassistant/integration-sdk` (v0.15). It
+talking to Gladys through `@gladysassistant/integration-sdk` (v0.16). It
 connects to the user's deCONZ / Phoscon gateway (ConBee, RaspBee) through its
 REST API and WebSocket, and turns its lights and sensors into Gladys devices,
 states, commands and a `button_event` scene trigger. Unofficial, not
@@ -18,7 +18,7 @@ affiliated with dresden elektronik.
 
 ```bash
 npm install
-npm test                                  # node --test, the built-in runner
+npm test                                  # node --test --test-timeout=60000
 node --test test/app.test.js              # one file
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
@@ -53,6 +53,12 @@ test/helpers/       a fake gateway (REST client + WebSocket); Gladys is the SDK'
 
 ## Rules
 
+- **Features follow the core model.** Every feature has a numeric `min` and
+  `max` (0/0 for text), a non-empty name, `read_only` and `has_feedback`:
+  Gladys answers HTTP 422 otherwise. The SDK's fake Gladys (0.16.1) checks
+  part of it; `test/helpers/coreFeature.js` checks all (test/devices.test.js).
+  Devices carry `should_poll: false` (Gladys 5.3 polls a device with
+  `poll_frequency` unless it says so).
 - **External ids are forever**: device = `deconz:<IEEE address>`, feature =
   `<device>:<uniqueid suffix>:<key>`, battery = `<device>:battery`. Never build
   them from the deCONZ REST ids, never change how they are built.
